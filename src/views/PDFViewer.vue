@@ -53,9 +53,19 @@
           @fullscreen="handleFullscreen"
           @toggle-view-mode="setViewMode"
           @toggle-sidebar="sidebarVisible = !sidebarVisible"
+          @open-split-dialog="splitDialogVisible = true"
         />
       </div>
     </template>
+
+    <!-- 拆分配置弹窗 -->
+    <split-dialog
+      :visible="splitDialogVisible"
+      :num-pages="numPages"
+      :file="file"
+      @close="splitDialogVisible = false"
+      @confirm="handleSplitConfirm"
+    />
   </div>
 </template>
 
@@ -65,6 +75,7 @@ import UploadArea from "@/components/PDFViewer/UploadArea.vue";
 import ThumbnailPanel from "@/components/PDFViewer/ThumbnailPanel.vue";
 import PDFCanvas from "@/components/PDFViewer/PDFCanvas.vue";
 import Toolbar from "@/components/PDFViewer/Toolbar.vue";
+import SplitDialog from "@/components/PDFViewer/SplitDialog.vue";
 
 export default {
   name: "PDFViewer",
@@ -73,8 +84,14 @@ export default {
     ThumbnailPanel,
     PDFCanvas: PDFCanvas,
     Toolbar,
+    SplitDialog,
   },
   mixins: [usePDFViewer()],
+  data() {
+    return {
+      splitDialogVisible: false,
+    };
+  },
   computed: {
     viewerStyle() {
       return {
@@ -164,6 +181,12 @@ export default {
     },
     setViewMode(mode) {
       this.viewMode = mode;
+    },
+    handleSplitConfirm(splits) {
+      console.log("拆分方案:", splits);
+      // 后续可以调用PDF拆分API
+      this.splitDialogVisible = false;
+      this.$message.success(`已生成 ${splits.length} 个拆分段落`);
     },
   },
 };

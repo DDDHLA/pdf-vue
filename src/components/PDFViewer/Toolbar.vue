@@ -12,6 +12,14 @@
         >
           <a-icon type="eye" />
         </a-button>
+        <a-button
+          type="text"
+          size="small"
+          @click="$emit('open-split-dialog')"
+          title="手工拆分"
+        >
+          <a-icon type="scissor" />
+        </a-button>
         <div :style="dividerStyle" />
         <a-button
           type="text"
