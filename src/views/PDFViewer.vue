@@ -54,6 +54,7 @@
           @toggle-view-mode="setViewMode"
           @toggle-sidebar="sidebarVisible = !sidebarVisible"
           @open-split-dialog="splitDialogVisible = true"
+          @download-word="downloadWord"
         />
       </div>
     </template>

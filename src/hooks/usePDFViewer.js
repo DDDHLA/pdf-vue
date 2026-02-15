@@ -1,3 +1,11 @@
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
+
+// 设置 worker
+if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+}
+
 export function usePDFViewer() {
   return {
     data() {
@@ -102,6 +110,77 @@ export function usePDFViewer() {
           a.download = this.file.name;
           a.click();
           URL.revokeObjectURL(url);
+        }
+      },
+
+      // 下载 Word (提取文本)
+      async downloadWord() {
+        if (!this.file) return;
+
+        try {
+          // 读取文件内容
+          const arrayBuffer = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(this.file);
+          });
+
+          // 加载 PDF
+          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+
+          let docContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office'
+                  xmlns:w='urn:schemas-microsoft-com:office:word'
+                  xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+              <meta charset='utf-8'>
+              <title>${this.file.name}</title>
+              <style>
+                body { font-family: 'SimSun', '宋体', sans-serif; }
+                p { margin-bottom: 10px; line-height: 1.5; }
+                .page-break { page-break-after: always; }
+              </style>
+            </head>
+            <body>
+          `;
+
+          // 遍历页面提取文本
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+
+            // 简单的文本拼接，尝试保留一些结构
+            // 这里的 textContent.items 包含 str (文本), transform (位置) 等信息
+            // 简单处理：直接拼接字符串，每项之间加空格，最后加换行
+            const pageText = textContent.items
+              .map(item => item.str)
+              .join(' '); // 或者尝试根据 y 坐标换行，这里先简单处理
+
+            docContent += `
+              <div class="page">
+                <p>${pageText || '[空页面或无法提取文本]'}</p>
+              </div>
+              <br class="page-break" />
+            `;
+          }
+
+          docContent += "</body></html>";
+
+          // 创建 Blob 并下载
+          const blob = new Blob([docContent], { type: "application/msword" });
+          const url = URL.createObjectURL(blob);
+          const fileName = this.file.name.replace(/\.pdf$/i, "") + ".doc";
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(url);
+
+        } catch (error) {
+          console.error("导出 Word 失败:", error);
+          alert("导出 Word 失败: " + (error.message || "未知错误"));
         }
       },
     },

@@ -89,6 +89,15 @@
         >
           <a-icon type="redo" />
         </a-button>
+        <div :style="dividerStyle" />
+        <a-button
+          type="text"
+          size="small"
+          @click="$emit('download-word')"
+          title="下载 Word"
+        >
+          <a-icon type="file-word" />
+        </a-button>
       </a-space>
     </div>
 
